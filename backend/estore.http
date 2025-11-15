@@ -1,0 +1,93 @@
+@baseUrl = http://localhost:8080
+@userId = desktop-user-1
+
+###
+# Products - list with optional filters
+GET {{baseUrl}}/api/products?category=&minPrice=&maxPrice=&search=&page=0&size=20&sort=price,asc
+Accept: application/json
+
+###
+# Products - get by id
+GET {{baseUrl}}/api/products/690c6366d711c0e6e716f54f
+Accept: application/json
+
+###
+# Products - create
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Neon RGB Mechanical Keyboard K95",
+  "description": "Hot-swappable switches, per-key RGB, aluminum frame.",
+  "imageUrl": "https://example.com/images/keyboard-k95.png",
+  "category": "Keyboards",
+  "price": 149.99,
+  "stock": 80
+}
+
+###
+# Products - update
+PUT {{baseUrl}}/api/products/691757900f4f44eb349d5e2c
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Neon RGB Mechanical Keyboard K95 (Rev 2)",
+  "description": "Updated stabilizers and improved keycaps.",
+  "imageUrl": "https://example.com/images/keyboard-k95-v2.png",
+  "category": "Keyboards",
+  "price": 159.99,
+  "stock": 75
+}
+
+###
+# Products - delete
+DELETE {{baseUrl}}/api/products/690c6e5351bce142e4396724
+Accept: application/json
+
+###
+# Cart - get / create cart for user
+GET {{baseUrl}}/api/carts/by-user/desktop-user-1
+Accept: application/json
+
+###
+# Cart - get by id
+GET {{baseUrl}}/api/carts/690c69714e0ed02484f18947
+Accept: application/json
+
+###
+# Cart - add item (query params)
+POST {{baseUrl}}/api/carts/690c69714e0ed02484f18947/items?productId=690c6366d711c0e6e716f54f&quantity=1
+Accept: application/json
+
+###
+# Cart - update item quantity (0 removes item)
+PATCH {{baseUrl}}/api/carts/690c69714e0ed02484f18947/items/691757900f4f44eb349d5e2c?quantity=2
+Accept: application/json
+
+###
+# Cart - remove item
+DELETE {{baseUrl}}/api/carts/690c69714e0ed02484f18947/items/690c6e5351bce142e439672c
+Accept: application/json
+
+###
+# Orders - place order from cart
+POST {{baseUrl}}/api/orders/from-cart/690c69714e0ed02484f18947
+Accept: application/json
+
+###
+# Orders - list orders by user
+GET {{baseUrl}}/api/orders/by-user/desktop-user-1
+Accept: application/json
+
+###
+# Orders - get by id
+GET {{baseUrl}}/api/orders/690c69954e0ed02484f18948
+Accept: application/json
+
+###
+# Orders - update status (PENDING | SHIPPED | DELIVERED | CANCELLED)
+PATCH {{baseUrl}}/api/orders/690c69954e0ed02484f18948/status/SHIPPED
+Accept: application/json
+
