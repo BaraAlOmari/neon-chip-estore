@@ -3,6 +3,7 @@ package com.udst.neon_chip_estore.controller;
 import java.util.List;
 
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import com.udst.neon_chip_estore.service.OrderService;
 
 @RestController
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "*")
 @Validated
 public class OrderController {
     private final OrderService orderService;
