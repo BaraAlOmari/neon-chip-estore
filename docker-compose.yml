@@ -18,6 +18,13 @@ services:
     depends_on:
       - mongo
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+
 volumes:
   mongo-data:
-
