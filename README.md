@@ -1,5 +1,4 @@
 # Neon Chip E-Store Application
-================================
 
 Computer accessories e‑commerce app. The app exposes a Spring Boot REST API backed by MongoDB and a Flutter desktop/web frontend for browsing products, managing a cart, and placing orders.
 
