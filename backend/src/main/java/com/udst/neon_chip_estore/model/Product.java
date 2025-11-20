@@ -33,6 +33,9 @@ public class Product {
     @PositiveOrZero
     private BigDecimal price;
 
+    @PositiveOrZero
+    private BigDecimal priceAfterDiscount;
+
     @NotNull
     @PositiveOrZero
     private Integer stock;
@@ -42,6 +45,31 @@ public class Product {
 
     @LastModifiedDate
     private Instant updatedAt;
+
+    public Product() {
+    }
+
+    public Product(String id,
+            @NotBlank String name,
+            String description,
+            String imageUrl,
+            String category,
+            @NotNull @PositiveOrZero BigDecimal price,
+            BigDecimal priceAfterDiscount,
+            @NotNull @PositiveOrZero Integer stock,
+            Instant createdAt,
+            Instant updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.category = category;
+        this.price = price;
+        this.priceAfterDiscount = priceAfterDiscount;
+        this.stock = stock;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
     public String getId() {
         return id;
@@ -89,6 +117,14 @@ public class Product {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getPriceAfterDiscount() {
+        return priceAfterDiscount;
+    }
+
+    public void setPriceAfterDiscount(BigDecimal priceAfterDiscount) {
+        this.priceAfterDiscount = priceAfterDiscount;
     }
 
     public Integer getStock() {

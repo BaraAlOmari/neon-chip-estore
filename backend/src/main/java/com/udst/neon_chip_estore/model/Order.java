@@ -31,6 +31,17 @@ public class Order {
     @LastModifiedDate
     private Instant updatedAt;
 
+    public Order(String id, String userId, List<OrderItem> items, BigDecimal total, OrderStatus status,
+            Instant createdAt, Instant updatedAt) {
+        this.id = id;
+        this.userId = userId;
+        this.items = items;
+        this.total = total;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public String getId() {
         return id;
     }
@@ -87,4 +98,3 @@ public class Order {
         this.updatedAt = updatedAt;
     }
 }
-

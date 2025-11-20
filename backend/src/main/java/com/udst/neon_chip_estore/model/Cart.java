@@ -1,5 +1,6 @@
 package com.udst.neon_chip_estore.model;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,17 @@ public class Cart {
 
     @Transient
     private java.math.BigDecimal total;
+
+    public Cart() {
+    }
+
+    public Cart(String id, String userId, List<CartItem> items, Instant createdAt, Instant updatedAt) {
+        this.id = id;
+        this.userId = userId;
+        this.items = items;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
     public String getId() {
         return id;

@@ -5,11 +5,23 @@ class Product {
   String? imageUrl;
   String? category;
   double price;
+  double? priceAfterDiscount;
   int stock;
   DateTime? createdAt;
   DateTime? updatedAt;
 
-  Product({this.id, required this.name, this.description, this.imageUrl, this.category, required this.price, required this.stock, this.createdAt, this.updatedAt});
+  Product({
+    this.id,
+    required this.name,
+    this.description,
+    this.imageUrl,
+    this.category,
+    required this.price,
+    this.priceAfterDiscount,
+    required this.stock,
+    this.createdAt,
+    this.updatedAt,
+  });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -19,6 +31,8 @@ class Product {
       imageUrl: json['imageUrl'] as String?,
       category: json['category'] as String?,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      priceAfterDiscount: (json['priceAfterDiscount'] as num?)?.toDouble() ??
+          (json['price'] as num?)?.toDouble(),
       stock: (json['stock'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
@@ -32,7 +46,7 @@ class Product {
         'imageUrl': imageUrl,
         'category': category,
         'price': price,
+        if (priceAfterDiscount != null) 'priceAfterDiscount': priceAfterDiscount,
         'stock': stock,
       };
 }
-

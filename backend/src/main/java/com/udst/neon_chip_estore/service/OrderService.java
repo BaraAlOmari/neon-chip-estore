@@ -1,6 +1,7 @@
 package com.udst.neon_chip_estore.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,11 +43,15 @@ public class OrderService {
                 .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Order order = new Order();
-        order.setUserId(cart.getUserId());
-        order.setItems(items);
-        order.setTotal(total);
-        order.setStatus(OrderStatus.PENDING);
+        Instant now = Instant.now();
+        Order order = new Order(
+                null,
+                cart.getUserId(),
+                items,
+                total,
+                OrderStatus.PENDING,
+                now,
+                now);
         Order saved = orderRepository.save(order);
 
         cart.getItems().clear();
@@ -71,13 +76,11 @@ public class OrderService {
     }
 
     private OrderItem toOrderItem(CartItem ci) {
-        OrderItem oi = new OrderItem();
-        oi.setProductId(ci.getProductId());
-        oi.setName(ci.getName());
-        oi.setImageUrl(ci.getImageUrl());
-        oi.setUnitPrice(ci.getUnitPrice());
-        oi.setQuantity(ci.getQuantity());
-        return oi;
+        return new OrderItem(
+                ci.getProductId(),
+                ci.getName(),
+                ci.getImageUrl(),
+                ci.getUnitPrice(),
+                ci.getQuantity());
     }
 }
-

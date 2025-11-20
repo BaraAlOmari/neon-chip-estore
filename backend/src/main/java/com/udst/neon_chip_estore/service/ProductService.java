@@ -73,6 +73,9 @@ public class ProductService {
 
     public Product create(Product p) {
         p.setId(null);
+        if (p.getPriceAfterDiscount() == null && p.getPrice() != null) {
+            p.setPriceAfterDiscount(p.getPrice().multiply(new BigDecimal("0.7")));
+        }
         return productRepository.save(p);
     }
 
@@ -87,6 +90,11 @@ public class ProductService {
         existing.setImageUrl(incoming.getImageUrl());
         existing.setCategory(incoming.getCategory());
         existing.setPrice(incoming.getPrice());
+        if (incoming.getPriceAfterDiscount() != null) {
+            existing.setPriceAfterDiscount(incoming.getPriceAfterDiscount());
+        } else if (incoming.getPrice() != null) {
+            existing.setPriceAfterDiscount(incoming.getPrice().multiply(new BigDecimal("0.7")));
+        }
         existing.setStock(incoming.getStock());
         return productRepository.save(existing);
     }
@@ -98,4 +106,3 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 }
-

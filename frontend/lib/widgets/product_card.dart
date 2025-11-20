@@ -19,6 +19,9 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
     final primary = Theme.of(context).colorScheme.primary;
+    final effectivePrice = product.priceAfterDiscount ?? product.price;
+    final hasDiscount = product.priceAfterDiscount != null &&
+        product.priceAfterDiscount! < product.price;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -82,10 +85,26 @@ class ProductCard extends StatelessWidget {
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        Text(
-                          fmt.format(product.price),
-                          style: Theme.of(context).textTheme.titleSmall,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (hasDiscount)
+                              Text(
+                                fmt.format(product.price),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      decoration: TextDecoration.lineThrough,
+                                      color: Colors.white60,
+                                    ),
+                              ),
+                            Text(
+                              fmt.format(effectivePrice),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: hasDiscount ? Colors.redAccent : null,
+                                  ),
+                            ),
+                          ],
                         ),
                         FilledButton.icon(
                           onPressed: onAdd,

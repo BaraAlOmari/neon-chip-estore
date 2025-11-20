@@ -23,6 +23,15 @@ public class CartItem {
     @Positive
     private int quantity;
 
+    public CartItem(@NotBlank String productId, @NotBlank String name, String imageUrl,
+            @NotNull @PositiveOrZero BigDecimal unitPrice, @Positive int quantity) {
+        this.productId = productId;
+        this.name = name;
+        this.imageUrl = imageUrl;
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
+    }
+
     public String getProductId() {
         return productId;
     }
@@ -63,4 +72,3 @@ public class CartItem {
         this.quantity = quantity;
     }
 }
-

@@ -259,9 +259,23 @@ extension _ProductDetails on _ProductsPageState {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              fmt.format(product.price),
-                              style: theme.textTheme.titleLarge?.copyWith(color: primary),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (product.priceAfterDiscount != null &&
+                                    product.priceAfterDiscount! < product.price)
+                                  Text(
+                                    fmt.format(product.price),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                          decoration: TextDecoration.lineThrough,
+                                          color: Colors.white60,
+                                        ),
+                                  ),
+                                Text(
+                                  fmt.format(product.priceAfterDiscount ?? product.price),
+                                  style: theme.textTheme.titleLarge?.copyWith(color: primary),
+                                ),
+                              ],
                             ),
                           ],
                         ),

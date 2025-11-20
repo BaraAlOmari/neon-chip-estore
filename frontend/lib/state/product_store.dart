@@ -61,12 +61,13 @@ class ProductStore extends ChangeNotifier {
 
   void _applyClientSideSort() {
     if (products.isEmpty || sort == null) return;
+    double priceOf(Product p) => p.priceAfterDiscount ?? p.price;
     switch (sort) {
       case 'price,asc':
-        products.sort((a, b) => a.price.compareTo(b.price));
+        products.sort((a, b) => priceOf(a).compareTo(priceOf(b)));
         break;
       case 'price,desc':
-        products.sort((a, b) => b.price.compareTo(a.price));
+        products.sort((a, b) => priceOf(b).compareTo(priceOf(a)));
         break;
       case 'name,asc':
         products.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));

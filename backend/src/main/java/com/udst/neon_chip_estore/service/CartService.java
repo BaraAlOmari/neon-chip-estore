@@ -1,6 +1,8 @@
 package com.udst.neon_chip_estore.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Optional;
 
@@ -28,8 +30,12 @@ public class CartService {
 
     public Cart getOrCreateCartByUser(String userId) {
         return cartRepository.findByUserId(userId).orElseGet(() -> {
-            Cart c = new Cart();
-            c.setUserId(userId);
+            Cart c = new Cart(
+                    null,
+                    userId,
+                    new ArrayList<>(),
+                    (Instant) null,
+                    (Instant) null);
             return cartRepository.save(c);
         });
     }
@@ -47,19 +53,25 @@ public class CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
 
+        // Use discounted price if available, otherwise fall back to original
+        BigDecimal unitPrice = product.getPriceAfterDiscount() != null
+                ? product.getPriceAfterDiscount()
+                : product.getPrice();
+
         Optional<CartItem> existing = cart.getItems().stream()
                 .filter(i -> i.getProductId().equals(productId))
                 .findFirst();
         if (existing.isPresent()) {
             CartItem item = existing.get();
+            item.setUnitPrice(unitPrice);
             item.setQuantity(item.getQuantity() + quantity);
         } else {
-            CartItem item = new CartItem();
-            item.setProductId(product.getId());
-            item.setName(product.getName());
-            item.setImageUrl(product.getImageUrl());
-            item.setUnitPrice(product.getPrice());
-            item.setQuantity(quantity);
+            CartItem item = new CartItem(
+                    product.getId(),
+                    product.getName(),
+                    product.getImageUrl(),
+                    unitPrice,
+                    quantity);
             cart.getItems().add(item);
         }
         return cartRepository.save(cart);
