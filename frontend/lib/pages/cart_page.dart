@@ -5,8 +5,17 @@ import 'package:provider/provider.dart';
 import '../state/cart_store.dart';
 import '../state/order_store.dart';
 
-class CartPage extends StatelessWidget {
+enum PaymentMethod { card, paypal, cash }
+
+class CartPage extends StatefulWidget {
   const CartPage({super.key});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  PaymentMethod? _payment;
 
   @override
   Widget build(BuildContext context) {
@@ -72,21 +81,96 @@ class CartPage extends StatelessWidget {
         ),
         Container(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('Total: ${fmt.format(cart.total)}', style: Theme.of(context).textTheme.titleLarge),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 520;
+                  final totalText = Text(
+                    'Total: ${fmt.format(cart.total)}',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontSize: 26,
+                        ),
+                  );
+                  final chips = Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.credit_card, size: 16),
+                            SizedBox(width: 6),
+                            Text('Credit/Debit Card'),
+                          ],
+                        ),
+                        selected: _payment == PaymentMethod.card,
+                        onSelected: (_) => setState(() => _payment = PaymentMethod.card),
+                      ),
+                      ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.account_balance_wallet, size: 16),
+                            SizedBox(width: 6),
+                            Text('PayPal'),
+                          ],
+                        ),
+                        selected: _payment == PaymentMethod.paypal,
+                        onSelected: (_) => setState(() => _payment = PaymentMethod.paypal),
+                      ),
+                      ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.monetization_on_outlined, size: 16),
+                            SizedBox(width: 6),
+                            Text('Cash on Delivery'),
+                          ],
+                        ),
+                        selected: _payment == PaymentMethod.cash,
+                        onSelected: (_) => setState(() => _payment = PaymentMethod.cash),
+                      ),
+                    ],
+                  );
+
+                  if (isNarrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        totalText,
+                        const SizedBox(height: 8),
+                        Align(alignment: Alignment.centerLeft, child: chips),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      totalText,
+                      chips,
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: cart.itemCount == 0
+                onPressed: cart.itemCount == 0 || _payment == null
                     ? null
                     : () async {
                         final order = await context.read<OrderStore>().placeOrderFromCart(cart);
                         if (context.mounted && order != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order placed • #${order.id.substring(0, 6)}')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Order placed • #${order.id.substring(0, 6)}')),
+                          );
                         }
                       },
                 icon: const Icon(Icons.local_shipping_outlined),
-                label: const Text('Place Order'),
+                label: Text(_payment == null ? 'Select payment' : 'Place Order'),
               ),
             ],
           ),
@@ -95,4 +179,3 @@ class CartPage extends StatelessWidget {
     );
   }
 }
-
