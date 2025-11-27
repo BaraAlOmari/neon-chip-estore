@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../feature_flags.dart';
 import '../state/cart_store.dart';
 import '../state/order_store.dart';
 
@@ -21,6 +22,17 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartStore>();
     final fmt = NumberFormat.currency(symbol: '\$');
+    final flags = FeatureFlags.instance;
+    final cardEnabled = flags.isEnabled('card');
+    final paypalEnabled = flags.isEnabled('paypal');
+    final cashEnabled = flags.isEnabled('cash');
+
+    // Clear selection if the selected method is no longer enabled
+    if ((_payment == PaymentMethod.card && !cardEnabled) ||
+        (_payment == PaymentMethod.paypal && !paypalEnabled) ||
+        (_payment == PaymentMethod.cash && !cashEnabled)) {
+      _payment = null;
+    }
 
     if (cart.loading && cart.cart == null) {
       return const Center(child: CircularProgressIndicator());
@@ -98,42 +110,45 @@ class _CartPageState extends State<CartPage> {
                     runSpacing: 8,
                     alignment: WrapAlignment.end,
                     children: [
-                      ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.credit_card, size: 16),
-                            SizedBox(width: 6),
-                            Text('Credit/Debit Card'),
-                          ],
+                      if (cardEnabled)
+                        ChoiceChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.credit_card, size: 16),
+                              SizedBox(width: 6),
+                              Text('Credit/Debit Card'),
+                            ],
+                          ),
+                          selected: _payment == PaymentMethod.card,
+                          onSelected: (_) => setState(() => _payment = PaymentMethod.card),
                         ),
-                        selected: _payment == PaymentMethod.card,
-                        onSelected: (_) => setState(() => _payment = PaymentMethod.card),
-                      ),
-                      ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.account_balance_wallet, size: 16),
-                            SizedBox(width: 6),
-                            Text('PayPal'),
-                          ],
+                      if (paypalEnabled)
+                        ChoiceChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.account_balance_wallet, size: 16),
+                              SizedBox(width: 6),
+                              Text('PayPal'),
+                            ],
+                          ),
+                          selected: _payment == PaymentMethod.paypal,
+                          onSelected: (_) => setState(() => _payment = PaymentMethod.paypal),
                         ),
-                        selected: _payment == PaymentMethod.paypal,
-                        onSelected: (_) => setState(() => _payment = PaymentMethod.paypal),
-                      ),
-                      ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.monetization_on_outlined, size: 16),
-                            SizedBox(width: 6),
-                            Text('Cash on Delivery'),
-                          ],
+                      if (cashEnabled)
+                        ChoiceChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.monetization_on_outlined, size: 16),
+                              SizedBox(width: 6),
+                              Text('Cash on Delivery'),
+                            ],
+                          ),
+                          selected: _payment == PaymentMethod.cash,
+                          onSelected: (_) => setState(() => _payment = PaymentMethod.cash),
                         ),
-                        selected: _payment == PaymentMethod.cash,
-                        onSelected: (_) => setState(() => _payment = PaymentMethod.cash),
-                      ),
                     ],
                   );
 

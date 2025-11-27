@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
+import 'feature_flags.dart';
 import 'state/cart_store.dart';
 import 'state/order_store.dart';
 import 'state/product_store.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FeatureFlags.instance.init();
   runApp(const NeonChipApp());
 }
 
