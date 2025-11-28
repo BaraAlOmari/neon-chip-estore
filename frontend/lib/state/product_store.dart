@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
 import '../api/product_api.dart';
+import '../feature_flags.dart';
 import '../models/product.dart';
 
 class ProductStore extends ChangeNotifier {
@@ -41,7 +42,12 @@ class ProductStore extends ChangeNotifier {
     }
   }
 
-  void applyFilters({String? category, String? search, double? minPrice, double? maxPrice, String? sort}) {
+  void applyFilters(
+      {String? category,
+      String? search,
+      double? minPrice,
+      double? maxPrice,
+      String? sort}) {
     this.category = category;
     this.search = search;
     this.minPrice = minPrice;
@@ -61,7 +67,10 @@ class ProductStore extends ChangeNotifier {
 
   void _applyClientSideSort() {
     if (products.isEmpty || sort == null) return;
-    double priceOf(Product p) => p.priceAfterDiscount ?? p.price;
+    final discountOn = FeatureFlags.instance.isEnabled('discount');
+    double priceOf(Product p) => discountOn && p.priceAfterDiscount != null
+        ? p.priceAfterDiscount!
+        : p.price;
     switch (sort) {
       case 'price,asc':
         products.sort((a, b) => priceOf(a).compareTo(priceOf(b)));
@@ -70,10 +79,12 @@ class ProductStore extends ChangeNotifier {
         products.sort((a, b) => priceOf(b).compareTo(priceOf(a)));
         break;
       case 'name,asc':
-        products.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        products.sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         break;
       case 'name,desc':
-        products.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        products.sort(
+            (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
         break;
       default:
         break;

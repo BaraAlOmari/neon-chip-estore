@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.udst.neon_chip_estore.exception.BadRequestException;
 import com.udst.neon_chip_estore.exception.NotFoundException;
+import com.udst.neon_chip_estore.flag.FeatureFlags;
 import com.udst.neon_chip_estore.model.Cart;
 import com.udst.neon_chip_estore.model.CartItem;
 import com.udst.neon_chip_estore.model.Product;
@@ -23,7 +24,8 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    public CartService(CartRepository cartRepository, ProductRepository productRepository) {
+    public CartService(CartRepository cartRepository,
+            ProductRepository productRepository) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
     }
@@ -53,8 +55,10 @@ public class CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
 
-        // Use discounted price if available, otherwise fall back to original
-        BigDecimal unitPrice = product.getPriceAfterDiscount() != null
+        // Decide which price to use based on the backend discount flag.
+        // When discounts are disabled, always use the original price.
+        boolean discountEnabled = FeatureFlags.isEnabledFeature("discount");
+        BigDecimal unitPrice = (discountEnabled && product.getPriceAfterDiscount() != null)
                 ? product.getPriceAfterDiscount()
                 : product.getPrice();
 
@@ -84,6 +88,14 @@ public class CartService {
         for (CartItem item : cart.getItems()) {
             if (item.getProductId().equals(productId)) {
                 found = true;
+                // Ensure unit price is consistent with current discount setting
+                Product product = productRepository.findById(productId)
+                        .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
+                boolean discountEnabled = FeatureFlags.isEnabledFeature("discount");
+                BigDecimal unitPrice = (discountEnabled && product.getPriceAfterDiscount() != null)
+                        ? product.getPriceAfterDiscount()
+                        : product.getPrice();
+                item.setUnitPrice(unitPrice);
                 if (quantity <= 0) {
                     // remove item if non-positive
                     removeItem(cartId, productId);

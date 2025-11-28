@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../feature_flags.dart';
 import '../models/product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -19,9 +20,14 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
     final primary = Theme.of(context).colorScheme.primary;
-    final effectivePrice = product.priceAfterDiscount ?? product.price;
-    final hasDiscount = product.priceAfterDiscount != null &&
+    final discountOn = FeatureFlags.instance.isEnabled('discount');
+    final effectivePrice = discountOn && product.priceAfterDiscount != null
+        ? product.priceAfterDiscount!
+        : product.price;
+    final hasDiscount = discountOn &&
+        product.priceAfterDiscount != null &&
         product.priceAfterDiscount! < product.price;
+    final cartOrderOn = FeatureFlags.instance.isEnabled('cart/order');
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -31,7 +37,7 @@ class ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.zero,
       ),
       child: InkWell(
-        onTap: onOpen ?? onAdd,
+        onTap: onOpen ?? (cartOrderOn ? onAdd : null),
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -52,26 +58,26 @@ class ProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
-                child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
-                    ? Container(
-                        color: Colors.white,
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.contain,
-                          alignment: Alignment.center,
-                          child: Image.network(
-                            product.imageUrl!,
-                            fit: BoxFit.contain,
+                child:
+                    (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                        ? Container(
+                            color: Colors.white,
                             alignment: Alignment.center,
-                            errorBuilder: (_, __, ___) => _placeholder(),
-                          ),
-                        ),
-                      )
-                    : _placeholder(),
+                            child: FittedBox(
+                              fit: BoxFit.contain,
+                              alignment: Alignment.center,
+                              child: Image.network(
+                                product.imageUrl!,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.center,
+                                errorBuilder: (_, __, ___) => _placeholder(),
+                              ),
+                            ),
+                          )
+                        : _placeholder(),
               ),
               Container(
                 padding: const EdgeInsets.all(12.0),
-                // Give the name + price/button enough vertical room to avoid overflow
                 height: 130,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,24 +99,32 @@ class ProductCard extends StatelessWidget {
                             if (hasDiscount)
                               Text(
                                 fmt.format(product.price),
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
                                       decoration: TextDecoration.lineThrough,
                                       color: Colors.white60,
                                     ),
                               ),
                             Text(
                               fmt.format(effectivePrice),
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: hasDiscount ? Colors.redAccent : null,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    color:
+                                        hasDiscount ? Colors.redAccent : null,
                                   ),
                             ),
                           ],
                         ),
-                        FilledButton.icon(
-                          onPressed: onAdd,
-                          icon: const Icon(Icons.add_shopping_cart),
-                          label: const Text('Add'),
-                        ),
+                        if (cartOrderOn)
+                          FilledButton.icon(
+                            onPressed: onAdd,
+                            icon: const Icon(Icons.add_shopping_cart),
+                            label: const Text('Add'),
+                          ),
                       ],
                     ),
                   ],
@@ -125,6 +139,8 @@ class ProductCard extends StatelessWidget {
 
   Widget _placeholder() => Container(
         color: Colors.white,
-        child: const Center(child: Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black38)),
+        child: const Center(
+            child: Icon(Icons.inventory_2_outlined,
+                size: 48, color: Colors.black38)),
       );
 }

@@ -1,6 +1,5 @@
 package com.udst.neon_chip_estore.model;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +27,7 @@ public class Cart {
     @LastModifiedDate
     private Instant updatedAt;
 
+    //field ignored when reading/writing data to the database
     @Transient
     private java.math.BigDecimal total;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../feature_flags.dart';
 import '../models/product.dart';
 import '../state/cart_store.dart';
 import '../state/product_store.dart';
@@ -32,6 +33,8 @@ class _ProductsPageState extends State<ProductsPage> {
     final store = context.watch<ProductStore>();
     final cart = context.read<CartStore>();
     final fmt = NumberFormat.currency(symbol: '\$');
+    final flags = FeatureFlags.instance;
+    final cartOrderOn = flags.isEnabled('cart/order');
 
     return Column(
       children: [
@@ -72,10 +75,14 @@ class _ProductsPageState extends State<ProductsPage> {
                         return ProductCard(
                           product: p,
                           onAdd: () async {
+                            if (!cartOrderOn) return;
                             await cart.add(p.id!, quantity: 1);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Added ${p.name} to cart (${fmt.format(p.price)})')),
+                                SnackBar(
+                                  content: Text(
+                                      'Added ${p.name} to cart (${fmt.format(p.price)})'),
+                                ),
                               );
                             }
                           },
@@ -93,9 +100,17 @@ class _ProductsPageState extends State<ProductsPage> {
             children: [
               Text('Page ${store.page + 1} of ${store.totalPages}'),
               Row(children: [
-                OutlinedButton.icon(onPressed: store.page > 0 ? store.prevPage : null, icon: const Icon(Icons.chevron_left), label: const Text('Prev')),
+                OutlinedButton.icon(
+                    onPressed: store.page > 0 ? store.prevPage : null,
+                    icon: const Icon(Icons.chevron_left),
+                    label: const Text('Prev')),
                 const SizedBox(width: 8),
-                FilledButton.icon(onPressed: store.page + 1 < store.totalPages ? store.nextPage : null, icon: const Icon(Icons.chevron_right), label: const Text('Next')),
+                FilledButton.icon(
+                    onPressed: store.page + 1 < store.totalPages
+                        ? store.nextPage
+                        : null,
+                    icon: const Icon(Icons.chevron_right),
+                    label: const Text('Next')),
               ]),
             ],
           ),
@@ -142,43 +157,58 @@ class _Filters extends StatelessWidget {
               items: const [
                 DropdownMenuItem(
                   value: '',
-                  child: Text('All categories', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('All categories',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 DropdownMenuItem(
                   value: 'Mice',
-                  child: Text('Mice', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('Mice',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 DropdownMenuItem(
                   value: 'Keyboards',
-                  child: Text('Keyboards', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('Keyboards',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 DropdownMenuItem(
                   value: 'Mouse Pads',
-                  child: Text('Mouse Pads', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('Mouse Pads',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 DropdownMenuItem(
                   value: 'Headsets & Microphones',
-                  child: Text('Headsets & Microphones', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('Headsets & Microphones',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 DropdownMenuItem(
                   value: 'Storage',
-                  child: Text('Storage', overflow: TextOverflow.ellipsis, maxLines: 1),
+                  child: Text('Storage',
+                      overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
               ],
               onChanged: (value) {
                 // Empty string represents \"all categories\" (no filter)
-                onCategoryChanged((value == null || value.isEmpty) ? null : value);
+                onCategoryChanged(
+                    (value == null || value.isEmpty) ? null : value);
                 onApply();
               },
             ),
           ),
           SizedBox(
             width: 120,
-            child: TextField(controller: minCtl, keyboardType: TextInputType.number, decoration: const InputDecoration(prefixText: '\$', labelText: 'Min')),
+            child: TextField(
+                controller: minCtl,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(prefixText: '\$', labelText: 'Min')),
           ),
           SizedBox(
             width: 120,
-            child: TextField(controller: maxCtl, keyboardType: TextInputType.number, decoration: const InputDecoration(prefixText: '\$', labelText: 'Max')),
+            child: TextField(
+                controller: maxCtl,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(prefixText: '\$', labelText: 'Max')),
           ),
           DropdownButton<String>(
             value: sort,
@@ -194,7 +224,10 @@ class _Filters extends StatelessWidget {
               onApply();
             },
           ),
-          FilledButton.icon(onPressed: onApply, icon: const Icon(Icons.filter_alt), label: const Text('Apply')),
+          FilledButton.icon(
+              onPressed: onApply,
+              icon: const Icon(Icons.filter_alt),
+              label: const Text('Apply')),
         ],
       ),
     );
@@ -205,6 +238,15 @@ extension _ProductDetails on _ProductsPageState {
   Future<void> _showProductDetails(Product product) async {
     final cart = context.read<CartStore>();
     final fmt = NumberFormat.currency(symbol: '\$');
+    final cartOrderOn = FeatureFlags.instance.isEnabled('cart/order');
+
+    final discountOn = FeatureFlags.instance.isEnabled('discount');
+    final displayPrice = discountOn && product.priceAfterDiscount != null
+        ? product.priceAfterDiscount!
+        : product.price;
+    final showOriginal = discountOn &&
+        product.priceAfterDiscount != null &&
+        product.priceAfterDiscount! < product.price;
 
     await showDialog<void>(
       context: context,
@@ -224,7 +266,10 @@ extension _ProductDetails on _ProductsPageState {
                 ),
                 border: Border.all(color: primary.withOpacity(0.4)),
                 boxShadow: [
-                  BoxShadow(color: primary.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 0)),
+                  BoxShadow(
+                      color: primary.withOpacity(0.35),
+                      blurRadius: 24,
+                      offset: const Offset(0, 0)),
                 ],
               ),
               child: Column(
@@ -239,7 +284,9 @@ extension _ProductDetails on _ProductsPageState {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.black26,
-                          child: const Center(child: Icon(Icons.inventory_2_outlined, size: 56)),
+                          child: const Center(
+                              child:
+                                  Icon(Icons.inventory_2_outlined, size: 56)),
                         ),
                       ),
                     ),
@@ -262,28 +309,30 @@ extension _ProductDetails on _ProductsPageState {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                if (product.priceAfterDiscount != null &&
-                                    product.priceAfterDiscount! < product.price)
+                                if (showOriginal)
                                   Text(
                                     fmt.format(product.price),
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                          decoration: TextDecoration.lineThrough,
-                                          color: Colors.white60,
-                                        ),
+                                      decoration: TextDecoration.lineThrough,
+                                      color: Colors.white60,
+                                    ),
                                   ),
                                 Text(
-                                  fmt.format(product.priceAfterDiscount ?? product.price),
-                                  style: theme.textTheme.titleLarge?.copyWith(color: primary),
+                                  fmt.format(displayPrice),
+                                  style: theme.textTheme.titleLarge
+                                      ?.copyWith(color: primary),
                                 ),
                               ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        if (product.category != null && product.category!.isNotEmpty)
+                        if (product.category != null &&
+                            product.category!.isNotEmpty)
                           Text(
                             product.category!,
-                            style: theme.textTheme.labelLarge?.copyWith(color: Colors.white70),
+                            style: theme.textTheme.labelLarge
+                                ?.copyWith(color: Colors.white70),
                           ),
                         const SizedBox(height: 12),
                         Text(
@@ -300,16 +349,18 @@ extension _ProductDetails on _ProductsPageState {
                               'In stock: ${product.stock}',
                               style: theme.textTheme.labelMedium,
                             ),
-                            FilledButton.icon(
-                              onPressed: product.id == null
-                                  ? null
-                                  : () async {
-                                      await cart.add(product.id!, quantity: 1);
-                                      if (mounted) Navigator.of(ctx).pop();
-                                    },
-                              icon: const Icon(Icons.add_shopping_cart),
-                              label: const Text('Add to cart'),
-                            ),
+                            if (cartOrderOn)
+                              FilledButton.icon(
+                                onPressed: product.id == null
+                                    ? null
+                                    : () async {
+                                        await cart.add(product.id!,
+                                            quantity: 1);
+                                        if (mounted) Navigator.of(ctx).pop();
+                                      },
+                                icon: const Icon(Icons.add_shopping_cart),
+                                label: const Text('Add to cart'),
+                              ),
                           ],
                         ),
                       ],

@@ -1,7 +1,6 @@
 import 'package:flagsmith/flagsmith.dart';
 
 /// Simple Flagsmith wrapper for the Flutter app.
-/// Use a client-side key passed via --dart-define=FLAGSMITH_CLIENT_KEY=... .
 class FeatureFlags {
   static final FeatureFlags instance = FeatureFlags._();
   FeatureFlags._();
@@ -11,14 +10,16 @@ class FeatureFlags {
   Map<String, Flag> _flags = {};
 
   Future<void> init() async {
-    // Read from dart-define: --dart-define=FLAGSMITH_CLIENT_KEY=...
-    final key = const String.fromEnvironment('FLAGSMITH_CLIENT_KEY');
+    //FLAGSMITH_CLIENT_KEY
+    final key = "GA7Dvqj7Zhxe9ovGU3pNuJ";
     if (key.isEmpty) {
       // No key provided: fall back to local defaults so the UI keeps working.
       _flags = {
         'card': Flag.seed('card', enabled: true),
         'paypal': Flag.seed('paypal', enabled: true),
         'cash': Flag.seed('cash', enabled: true),
+        'discount': Flag.seed('discount', enabled: true),
+        'cart/order': Flag.seed('cart/order', enabled: true),
       };
       _ready = true;
       return;
@@ -39,6 +40,8 @@ class FeatureFlags {
         'card': Flag.seed('card', enabled: true),
         'paypal': Flag.seed('paypal', enabled: true),
         'cash': Flag.seed('cash', enabled: true),
+        'discount': Flag.seed('discount', enabled: true),
+        'cart/order': Flag.seed('cart/order', enabled: true),
       };
       _ready = true;
     }

@@ -7,6 +7,7 @@ import 'pages/products_page.dart';
 import 'state/cart_store.dart';
 import 'state/product_store.dart';
 import 'widgets/neon_logo.dart';
+import 'feature_flags.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -27,8 +28,20 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = const [ProductsPage(), CartPage(), OrdersPage()];
-    const titles = ['Products', 'Cart', 'Orders'];
+    final flags = FeatureFlags.instance;
+    final cartOrderEnabled = flags.isEnabled('cart/order');
+
+    final pages = cartOrderEnabled
+        ? const [ProductsPage(), CartPage(), OrdersPage()]
+        : const [ProductsPage()];
+    final titles =
+        cartOrderEnabled ? ['Products', 'Cart', 'Orders'] : ['Products'];
+
+    var currentIndex = _index;
+    if (currentIndex >= pages.length) {
+      currentIndex = 0;
+    }
+
     final cartCount = context.watch<CartStore>().itemCount;
 
     return LayoutBuilder(
@@ -45,7 +58,10 @@ class _AppShellState extends State<AppShell> {
                 const SizedBox(width: 10),
                 ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF00E5FF), Color.fromARGB(255, 200, 0, 255)],
+                    colors: [
+                      Color(0xFF00E5FF),
+                      Color.fromARGB(255, 200, 0, 255)
+                    ],
                   ).createShader(bounds),
                   blendMode: BlendMode.srcIn,
                   child: const Text(
@@ -55,8 +71,14 @@ class _AppShellState extends State<AppShell> {
                     style: TextStyle(
                       color: Colors.white,
                       shadows: [
-                        Shadow(color: Color(0x8000E5FF), blurRadius: 12, offset: Offset(0, 0)),
-                        Shadow(color: Color(0x80FF00D4), blurRadius: 12, offset: Offset(0, 0)),
+                        Shadow(
+                            color: Color(0x8000E5FF),
+                            blurRadius: 12,
+                            offset: Offset(0, 0)),
+                        Shadow(
+                            color: Color(0x80FF00D4),
+                            blurRadius: 12,
+                            offset: Offset(0, 0)),
                       ],
                     ),
                   ),
@@ -64,7 +86,7 @@ class _AppShellState extends State<AppShell> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    titles[_index],
+                    titles[currentIndex],
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: Theme.of(context).textTheme.titleLarge,
@@ -73,9 +95,10 @@ class _AppShellState extends State<AppShell> {
               ],
             ),
             actions: [
-              if (!isMobile && _index == 0)
+              if (!isMobile && currentIndex == 0)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                   child: SizedBox(
                     height: 40,
                     width: 420,
@@ -105,38 +128,41 @@ class _AppShellState extends State<AppShell> {
                     ),
                   ),
                 ),
-              if (isMobile && _index == 0)
+              if (isMobile && currentIndex == 0)
                 IconButton(
                   tooltip: 'Search',
                   onPressed: () => _openSearchSheet(context),
                   icon: const Icon(Icons.search),
                 ),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    tooltip: 'Cart',
-                    onPressed: () => setState(() => _index = 1),
-                    icon: const Icon(Icons.shopping_cart_outlined),
-                  ),
-                  if (cartCount > 0)
-                    Positioned(
-                      right: 1,
-                      top: 2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '$cartCount',
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
+              if (cartOrderEnabled)
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: 'Cart',
+                      onPressed: () => setState(() => _index = 1),
+                      icon: const Icon(Icons.shopping_cart_outlined),
+                    ),
+                    if (cartCount > 0)
+                      Positioned(
+                        right: 1,
+                        top: 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$cartCount',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14),
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                ),
               const SizedBox(width: 8),
             ],
           ),
@@ -152,29 +178,59 @@ class _AppShellState extends State<AppShell> {
               children: [
                 if (isWide)
                   NavigationRail(
-                    selectedIndex: _index,
+                    selectedIndex: currentIndex,
                     onDestinationSelected: (i) => setState(() => _index = i),
                     labelType: NavigationRailLabelType.all,
-                  destinations: const [
-                    NavigationRailDestination(icon: Icon(Icons.storefront_outlined), label: Text('Products')),
-                    NavigationRailDestination(icon: Icon(Icons.shopping_cart_outlined), label: Text('Cart')),
-                    NavigationRailDestination(icon: Icon(Icons.receipt_long_outlined), label: Text('Orders')),
-                  ],
+                    destinations: cartOrderEnabled
+                        ? const [
+                            NavigationRailDestination(
+                              icon: Icon(Icons.storefront_outlined),
+                              label: Text('Products'),
+                            ),
+                            NavigationRailDestination(
+                              icon: Icon(Icons.shopping_cart_outlined),
+                              label: Text('Cart'),
+                            ),
+                            NavigationRailDestination(
+                              icon: Icon(Icons.receipt_long_outlined),
+                              label: Text('Orders'),
+                            ),
+                          ]
+                        : const [
+                            NavigationRailDestination(
+                              icon: Icon(Icons.storefront_outlined),
+                              label: Text('Products'),
+                            ),
+                          ],
                   ),
-                Expanded(child: pages[_index]),
+                Expanded(child: pages[currentIndex]),
               ],
             ),
           ),
           bottomNavigationBar: isWide
               ? null
               : NavigationBar(
-                  selectedIndex: _index,
+                  selectedIndex: currentIndex,
                   onDestinationSelected: (i) => setState(() => _index = i),
-                  destinations: const [
-                    NavigationDestination(icon: Icon(Icons.storefront_outlined), label: 'Products'),
-                    NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: 'Cart'),
-                    NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),
-                  ],
+                  destinations: cartOrderEnabled
+                      ? const [
+                          NavigationDestination(
+                            icon: Icon(Icons.storefront_outlined),
+                            label: 'Products',
+                          ),
+                          NavigationDestination(
+                              icon: Icon(Icons.shopping_cart_outlined),
+                              label: 'Cart'),
+                          NavigationDestination(
+                              icon: Icon(Icons.receipt_long_outlined),
+                              label: 'Orders'),
+                        ]
+                      : const [
+                          NavigationDestination(
+                            icon: Icon(Icons.storefront_outlined),
+                            label: 'Products',
+                          ),
+                        ],
                 ),
         );
       },
